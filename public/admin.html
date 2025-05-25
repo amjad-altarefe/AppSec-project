@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Panel</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f1ec;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 50px auto;
+      background-color: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.05);
+    }
+
+    h1 {
+      text-align: center;
+      color: #5a4a3f;
+      margin-bottom: 30px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 15px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #eee;
+      color: #5a4a3f;
+    }
+
+    .delete-btn {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      background-color: #c95c5c;
+      color: white;
+    }
+
+    .logout-container {
+      text-align: center;
+      margin-top: 40px;
+      margin-bottom: 20px;
+    }
+
+    .logout-btn {
+      padding: 10px 20px;
+      background-color: #888066;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.3s ease;
+    }
+
+    .logout-btn:hover {
+      background-color: #6e6856;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Welcome Admin</h1>
+    <table border="1" id="usersTable">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="user-table-body">
+        <!-- يتم ملؤه من JavaScript -->
+      </tbody>
+    </table>
+  </div>
+
+  <div class="logout-container">
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+
+  <script>
+    async function logout() {
+      await fetch('/logout');
+      window.location.href = '/login';
+    }
+
+    async function fetchUsers() {
+      const res = await fetch('/admin/users');
+      const users = await res.json();
+
+      const tableBody = document.querySelector('#usersTable tbody');
+      tableBody.innerHTML = '';
+
+      users.forEach(user => {
+        const row = document.createElement('tr');
+
+        row.innerHTML = `
+          <td>${user.name}</td>
+          <td>${user.email}</td>
+          <td>${user.role || 'user'}</td>
+          <td>
+            <button class="delete-btn" onclick="deleteUser('${user._id}')">Delete</button>
+          </td>
+        `;
+
+        tableBody.appendChild(row);
+      });
+    }
+
+    async function deleteUser(id) {
+      await fetch(`/admin/users/${id}`, { method: 'DELETE' });
+      fetchUsers(); // إعادة تحميل القائمة بعد الحذف
+    }
+
+    fetchUsers();
+  </script>
+</body>
+</html>
