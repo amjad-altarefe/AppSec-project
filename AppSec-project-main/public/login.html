@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Login</title>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #1a1f24;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        form {
+            background-color: #232a31;
+            width: 90%;
+            max-width: 400px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            padding: 40px 30px;
+        }
+
+        form p {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 30px;
+            font-weight: bold;
+            color: #f8f8f8;
+        }
+
+        .input {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+            color: #d3d3d3;
+        }
+
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #444;
+            background-color: #2e363d;
+            color: #fff;
+            font-size: 1rem;
+            transition: 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            background-color: #384148;
+            border-color: #66b2ff;
+        }
+
+        .btn {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        button {
+            background-color: #66b2ff;
+            color: #fff;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        button:hover {
+            background-color: #559ddf;
+            transform: translateY(-2px);
+        }
+
+        .register-link {
+            margin-top: 25px;
+            font-size: 0.9rem;
+            color: #aaa;
+            text-align: center;
+            padding-bottom: 10px;
+        }
+
+        .register-link a {
+            color: #66b2ff;
+            text-decoration: none;
+            font-weight: 500;
+            margin-left: 5px;
+        }
+
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <form action="/login" method="POST">
+        <div id="form">
+            <p>Login</p>
+            <div class="input">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="your@email.com" />
+            </div>
+            <div class="input">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Password" />
+            </div>
+            <div class="btn">
+                <button type="submit">Login</button>
+            </div>
+            <div class="register-link">
+                Don't have an account?<a href="register.html">Register</a>
+            </div>
+        </div>
+    </form>
+</body>
+</html>
