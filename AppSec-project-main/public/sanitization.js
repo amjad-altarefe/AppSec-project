@@ -22,6 +22,7 @@ function isValidPassword(password) {
 function isValidName(name) {
   const regex = /^[A-Za-z\s]+$/;
   return regex.test(name);
+  //.
 }
 
 
