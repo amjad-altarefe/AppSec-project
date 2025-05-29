@@ -107,27 +107,93 @@
         .register-link a:hover {
             text-decoration: underline;
         }
+          #error-message {
+            color: #ff6b6b;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            text-align: center;
+            display: block;
+            white-space: pre-wrap; /* يدعم الأسطر الجديدة */
+        }
     </style>
-</head>
+
 <body>
-    <form action="/login" method="POST">
-        <div id="form">
-            <p>Login</p>
-            <div class="input">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" placeholder="your@email.com" />
-            </div>
-            <div class="input">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" placeholder="Password" />
-            </div>
-            <div class="btn">
-                <button type="submit">Login</button>
-            </div>
-            <div class="register-link">
-                Don't have an account?<a href="register.html">Register</a>
-            </div>
-        </div>
-    </form>
+  <form action="/login" method="POST">
+    <div id="form">
+      <p>Login</p>
+      <div class="input">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" placeholder="your@email.com" />
+      </div>
+      <div class="input">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" placeholder="Password" />
+      </div>
+
+      <p id="error-message"></p> <!-- رسالة الخطأ هنا -->
+
+      <div class="btn">
+        <button type="submit">Login</button>
+      </div>
+      <div class="register-link">
+        Don't have an account?<a href="register.html">Register</a>
+      </div>
+    </div>
+  </form>
+
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+<script src="sanitization.js"></script>
+<script>
+  const errorMessage = document.getElementById("error-message");
+
+  document.querySelector("form").addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+
+    const email = sanitizeInput(emailInput.value);
+    const password = sanitizeInput(passwordInput.value);
+
+    // مسح أي رسالة خطأ قديمة
+    errorMessage.textContent = "";
+
+    if (!isValidEmail(email)) {
+      errorMessage.textContent = "Invalid email format.";
+      return;
+    }
+
+    // لو تحب تفعل التحقق من كلمة المرور، فك التعليق هنا
+
+    
+    if (!isValidPassword(password)) {
+      errorMessage.textContent = "The password or Email is incorrect.";
+      return;
+    }
+    
+
+    const formData = new URLSearchParams();
+    formData.append("email", email);
+    formData.append("password", password);
+
+    try {
+      const response = await fetch("/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: formData.toString()
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        window.location.href = data.redirect;
+      } else {
+        const result = await response.json().catch(() => ({}));
+        errorMessage.textContent = result.message || "Login failed";
+      }
+    } catch {
+      errorMessage.textContent = "Something went wrong while submitting the form.";
+    }
+  });
+</script>
 </body>
 </html>

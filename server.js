@@ -4,15 +4,18 @@ const mongoose = require('mongoose');
 const User = require('./models/User');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
+const { body, validationResult } = require('express-validator');
 require('dotenv').config();
+const { authenticateJWT, authorizeRoles, checkSession } = require('./authentication');
+const { encrypt, decrypt } = require('./encryption');
 
 const app = express();
 const PORT=process.env.PORT;
 const EMAIL = process.env.EMAIL
-const SALT = process.env.SALT;
+const SALT = Number(process.env.SALT);
 const secret = process.env.JWT_SECRET;
 
-mongoose.connect('mongodb://127.0.0.1:27017/userDB', {
+mongoose.connect('mongodb://127.0.0.1:27017/myapp', {
     useNewUrlParser: true,
     useUnifiedTopology: true
 }).then(() => {
@@ -32,39 +35,37 @@ app.use(session({
 }));
 
 app.post('/login', async (req, res) => {
-  //const { email, password } = req.body;
-  const { name, email, password, role } = req.body;
-  const user = new User({ name, email, password, role: role || 'user' });
+  const { email, password } = req.body;
   try {
-    // 1. البحث عن المستخدم حسب الإيميل
     const user = await User.findOne({ email });
-    
     if (!user) {
-      return res.status(401).send('User not found');
+      return res.status(401).json({ message: 'User not found' });
     }
 
-    // 2. مقارنة كلمة المرور (إذا كانت مشفرة)
-    const isMatch = await bcrypt.compare(password, user.password);
-
+    const isMatch = await bcrypt.compare( password, user.password);
     if (!isMatch) {
-      return res.status(401).send('Invalid credentials');
+      return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     req.session.userId = user._id;
-    req.session.isAdmin = (email === EMAIL); // فقط هذا الإيميل admin
-    //req.session.role    = user.role; 
-    // 3. نجاح تسجيل الدخول
-    if (req.session.isAdmin) {
-      res.redirect('/admin');
-    } else {
-      res.send('Login successful!');
-    }
-    
-    // لاحقًا: ممكن توليد JWT أو تفعيل session
+    req.session.role = user.role;
+
+    // فقط إذا كان المستخدم هو أدمن
+    // في السيرفر
+if (user.role === 'admin') {
+  req.session.isAdmin = true;
+  return res.status(200).json({ redirect: '/admin' });
+}
+// مستخدم عادي
+return res.status(200).json({ redirect: '/home' });
+
+
   } catch (err) {
+    console.error("Login error:", err);
     res.status(500).send('Server error');
   }
 });
+
 function checkAdmin(req, res, next) {
   if (req.session && req.session.isAdmin) {
     next(); // السماح بالوصول
@@ -72,7 +73,6 @@ function checkAdmin(req, res, next) {
     res.status(403).send('Access denied');
   }
 }
-
 
 app.post('/register', async (req, res) => {
     const { name, email, password } = req.body;
@@ -83,7 +83,7 @@ app.post('/register', async (req, res) => {
 
     try {
         const hashedPassword = await bcrypt.hash(password, SALT); // <-- تشفير الباسورد
-        const user = new User({ name, email, password: hashedPassword }); // <-- حفظ المشفّر
+        const user = new User({ name, email, password: hashedPassword, role: 'user' }); // <-- حفظ المشفّر
         await user.save();
 
         res.status(201).send("User registered successfully.");
@@ -136,6 +136,10 @@ app.get('/admin/users', checkAdmin, async (req, res) => {
     res.status(500).send('Server error');
   }
 });
+app.get('/home', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'home.html'));
+});
+
 //✅ حذف مستخدم:
 app.delete('/admin/users/:id', checkAdmin, async (req, res) => {
   try {
@@ -145,6 +149,33 @@ app.delete('/admin/users/:id', checkAdmin, async (req, res) => {
     res.status(500).send('Server error');
   }
 });
+
+// استخدامها في المسارات
+app.get('/protected-route', authenticateJWT, (req, res) => {
+    res.json({ message: 'This is a protected route', user: req.user });
+});
+
+app.get('/admin-only', authenticateJWT, authorizeRoles('admin'), (req, res) => {
+    res.json({ message: 'Admin dashboard', user: req.user });
+});
+
+// أو للمسارات التي تستخدم الجلسات
+app.get('/profile', checkSession, (req, res) => {
+    // عرض صفحة الملف الشخصي
+});
+
+
+//const { encrypt, decrypt } = require('./encryption');
+
+// مثال للتشفير
+const sensitiveData = 'credit-card-number-1234';
+const encryptedData = encrypt(sensitiveData);
+console.log('Encrypted:', encryptedData);
+
+// مثال لفك التشفير
+const decryptedData = decrypt(encryptedData);
+console.log('Decrypted:', decryptedData);
+
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
