@@ -8,6 +8,7 @@ const { body, validationResult } = require('express-validator');
 require('dotenv').config();
 const { authenticateJWT, authorizeRoles, checkSession } = require('./authentication');
 const { encrypt, decrypt } = require('./encryption');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const PORT=process.env.PORT;
@@ -27,6 +28,16 @@ mongoose.connect('mongodb://127.0.0.1:27017/myapp', {
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
+
+// حد: 3 محاولات تسجيل دخول كل 15 دقيقة
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 دقيقة
+  max: 3, // عدد المحاولات المسموح بها
+  message: { message: 'Too many login attempts. Please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 app.use(session({
   secret: process.env.JWT_SECRET, 
