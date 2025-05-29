@@ -182,10 +182,10 @@
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: formData.toString()
       });
+      const result = await response.json(); // 👈 لازم هنا
 
       if (response.ok) {
-        const data = await response.json();
-        window.location.href = data.redirect;
+        window.location.href = result.redirect;
       } else {
         const result = await response.json().catch(() => ({}));
         errorMessage.textContent = result.message || "Login failed";
