@@ -11,6 +11,28 @@ const { encrypt, decrypt } = require('./encryption');
 const rateLimit = require('express-rate-limit');
 
 const app = express();
+
+const helmet = require('helmet');
+app.use(helmet());
+const cors = require('cors');
+app.use(helmet.contentSecurityPolicy({
+  directives: {
+    defaultSrc: ["'self'"],
+    scriptSrc: ["'self'", 'trusted-cdn.com'],
+        styleSrc:   ["'self'", "'unsafe-inline'"], // ← هنا المفتاح!
+    fontSrc: ["'self'", 'fonts.gstatic.com'],
+    imgSrc: ["'self'", 'data:'],
+  }
+}));
+
+
+const corsOptions = {
+  origin: 'http://localhost:5000',      //    <--------------- ` http://localhost:${PORT} ` رح يطلع ايرور في عملية ال(run)
+  methods: ['GET', 'POST'],
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 const PORT=process.env.PORT;
 const EMAIL = process.env.EMAIL
 const SALT = Number(process.env.SALT);
@@ -51,46 +73,50 @@ app.use(session({
     }
 }));
 app.post('/login', [
-  body('email').isEmail().withMessage('Invalid email format').normalizeEmail(),
-  body('password').notEmpty().withMessage('Password is required'),],
-   async (req, res) => {
-    const errors = validationResult(req);
+  body('email').matches( /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}$/i)
+  .withMessage('Invalid email format').normalizeEmail(),
+  body('password')
+  .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$/)
+  .withMessage('Incorrect password'),
+], async (req, res) => {
+  const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
+    const message = errors.array().map(e => e.msg).join(', ');
+    return res.redirect('/login?error=' + encodeURIComponent(message));
   }
+
   const { email, password } = req.body;
+
   try {
-    const encryptedEmail = encrypt(email); // ← تشفير الإيميل قبل البحث
+    const encryptedEmail = encrypt(email);
     const user = await User.findOne({ email: encryptedEmail });
+
     if (!user) {
-      return res.status(401).json({ message: 'User not found' });
+      return res.redirect('/login?error=' + encodeURIComponent('User not found'));
     }
 
-    const isMatch = await bcrypt.compare( password, user.password);
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.redirect('/login?error=' + encodeURIComponent('Invalid credentials'));
     }
 
     req.session.regenerate(function(err) {
-    if (err) return res.status(500).send('Session error');
+      if (err) return res.redirect('/login?error=' + encodeURIComponent('Session error'));
 
-    req.session.userId = user._id;
-    req.session.role = user.role;
+      req.session.userId = user._id;
+      req.session.role = user.role;
 
-    // فقط إذا كان المستخدم هو أدمن
-    // في السيرفر
-if (user.role === 'admin') {
-  req.session.isAdmin = true;
-  return res.json({ redirect: '/admin' });  // ✅ string
+      if (user.role === 'admin') {
+        req.session.isAdmin = true;
+        return res.redirect('/admin');
+      }
 
-}
-// مستخدم عادي
-return res.status(200).json({ redirect: '/home' });
-});
+      return res.redirect('/home');
+    });
 
   } catch (err) {
     console.error("Login error:", err);
-    res.status(500).send('Server error');
+    return res.redirect('/login?error=' + encodeURIComponent('Server error'));
   }
 });
 
@@ -102,22 +128,30 @@ function checkAdmin(req, res, next) {
   }
 }
 
+
 app.post('/register',[ body('name').trim().notEmpty().withMessage('Name is required'),
-  body('email').isEmail().withMessage('Invalid email format').normalizeEmail(),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),], 
+  body('email').matches( /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}$/i)
+  .withMessage('Invalid email format').normalizeEmail(),
+  body('password')
+  .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$/)
+  .withMessage('Password must be at least 8 characters and include:\n• One uppercase letter\n• One lowercase letter\n• One special character')
+,], 
   async (req, res) => {
   
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       // إذا في أخطاء، رجعها للمستخدم
-      return res.status(400).json({ errors: errors.array() });
+     const msg = errors.array()[0].msg;
+      return res.redirect('/register.html?error=' + encodeURIComponent(msg));
     }
 
     const { name, email, password } = req.body;
 
-    /*if (!name || !email || !password) {
-        return res.status(400).send("All fields are required.");
-    }*/
+    if (!name || !email || !password) {
+        return res.redirect(
+        '/register.html?error=' + encodeURIComponent('All fields are required')
+      );
+    }
 
     try {
         const hashedPassword = await bcrypt.hash(password, SALT); // <-- تشفير الباسورد
@@ -125,13 +159,19 @@ app.post('/register',[ body('name').trim().notEmpty().withMessage('Name is requi
         const user = new User({ name, email: encryptedEmail, password: hashedPassword, role: 'user' }); // <-- حفظ المشفّر
         await user.save();
 
-        res.status(201).send("User registered successfully.");
+        return res.redirect(
+        '/login.html?success=' + encodeURIComponent('User registered successfully. Please log in.')
+      );
     } catch (err) {
         if (err.code === 11000) {
-            res.status(409).send("Email already exists.");
-        } else {
-            res.status(500).send("Something went wrong.");
-        }
+            return res.redirect(
+          '/register.html?error=' + encodeURIComponent('Email already exists.')
+        );
+      }
+      console.error('Registration error:', err);
+      return res.redirect(
+        '/register.html?error=' + encodeURIComponent('Something went wrong.')
+      );
     }
 });
 
@@ -142,6 +182,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
+
 
 // راوت login
 app.get('/login', (req, res) => {
@@ -161,9 +202,6 @@ app.get('/logout', (req, res) => {
 });
 
 
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-});
 
 app.get('/admin', checkAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
@@ -174,7 +212,7 @@ app.get('/admin/users', checkAdmin, async (req, res) => {
     const users = await User.find();
     const decryptedUsers = users.map(user => ({
       _id: user._id,
-      name: user.name,
+      name: user.name,  
       email: decrypt(user.email), // ← فك التشفير
       role: user.role
     }));  
@@ -194,7 +232,7 @@ app.delete('/admin/users/:id', checkAdmin, async (req, res) => {
     res.send('User deleted');
   } catch (err) {
     res.status(500).send('Server error');
-  }
+  } 
 });
 
 // استخدامها في المسارات
@@ -205,11 +243,35 @@ app.get('/protected-route', authenticateJWT, (req, res) => {
 app.get('/admin-only', authenticateJWT, authorizeRoles('admin'), (req, res) => {
     res.json({ message: 'Admin dashboard', user: req.user });
 });
+app.get('/api/user', (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ error: 'Unauthorized' });
 
-// أو للمسارات التي تستخدم الجلسات
-app.get('/profile', checkSession, (req, res) => {
-    // عرض صفحة الملف الشخصي
+  User.findById(req.session.userId)
+    .then(user => {
+      if (!user) return res.status(404).json({ error: 'User not found' });
+      res.json({ name: user.name, email: decrypt(user.email), role: user.role });
+    })
+    .catch(() => res.status(500).json({ error: 'Server error' }));
 });
+
+app.put('/api/profile', async (req, res) => {
+  if (!req.session.userId) return res.status(401).send("Unauthorized");
+
+  try {
+    const { name, email } = req.body;
+    const encryptedEmail = encrypt(email);
+    await User.findByIdAndUpdate(req.session.userId, { name, email: encryptedEmail });
+    res.send("Profile updated");
+  } catch {
+    res.status(500).send("Error updating profile");
+  }
+});
+
+app.get('/profile', checkSession, (req, res) => {
+  if (!req.session.userId) return res.redirect('/login');
+  res.sendFile(path.join(__dirname, 'public', 'profile.html'));
+});
+
 
 
 app.listen(PORT, () => {

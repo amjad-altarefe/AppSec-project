@@ -115,85 +115,84 @@
             display: block;
             white-space: pre-wrap; /* يدعم الأسطر الجديدة */
         }
-    </style>
+    #error-message{
+      color:#ff6b6b;
+      margin:10px 0;
+      text-align:center;
+    }
+  </style>
+</head>
 
 <body>
-  <form action="/login" method="POST">
-    <div id="form">
-      <p>Login</p>
-      <div class="input">
-        <label for="email">Email</label>
-        <input type="email" id="email" name="email" placeholder="your@email.com" />
-      </div>
-      <div class="input">
-        <label for="password">Password</label>
-        <input type="password" id="password" name="password" placeholder="Password" />
-      </div>
+  <form id="login-form" action="/login" method="POST">
+    <p style="text-align:center;font-size:2rem;margin-bottom:20px;">Login</p>
 
-      <p id="error-message"></p> <!-- رسالة الخطأ هنا -->
+    <div class="input">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" placeholder="you@email.com" />
+    </div>
 
-      <div class="btn">
-        <button type="submit">Login</button>
-      </div>
-      <div class="register-link">
-        Don't have an account?<a href="register.html">Register</a>
-      </div>
+    <div class="input">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" placeholder="Password" />
+    </div>
+
+    <div id="error-message"></div>
+
+    <div class="btn">
+      <button type="submit">Login</button>
+    </div>
+
+    <div class="register-link">
+      Don't have an account? <a href="register.html">Register</a>
     </div>
   </form>
 
-<script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
-<script src="sanitization.js"></script>
+  <!-- مكتبات التحقّق/التنظيف -->
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+  <script src="sanitization.js"></script>
+
+<script src="login.js" defer></script>
 <script>
-  const errorMessage = document.getElementById("error-message");
+   /* document.addEventListener('DOMContentLoaded', () => {
+      const form   = document.getElementById('login-form');
+      const errBox = document.getElementById('error-message');
 
-  document.querySelector("form").addEventListener("submit", async function (e) {
-    e.preventDefault();
-
-    const emailInput = document.getElementById("email");
-    const passwordInput = document.getElementById("password");
-
-    const email = sanitizeInput(emailInput.value);
-    const password = sanitizeInput(passwordInput.value);
-
-    // مسح أي رسالة خطأ قديمة
-    errorMessage.textContent = "";
-
-    if (!isValidEmail(email)) {
-      errorMessage.textContent = "Invalid email format.";
-      return;
-    }
-
-    // لو تحب تفعل التحقق من كلمة المرور، فك التعليق هنا
-
-    
-    if (!isValidPassword(password)) {
-      errorMessage.textContent = "The password or Email is incorrect.";
-      return;
-    }
-    
-
-    const formData = new URLSearchParams();
-    formData.append("email", email);
-    formData.append("password", password);
-
-    try {
-      const response = await fetch("/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: formData.toString()
-      });
-      const result = await response.json(); // 👈 لازم هنا
-
-      if (response.ok) {
-        window.location.href = result.redirect;
-      } else {
-        const result = await response.json().catch(() => ({}));
-        errorMessage.textContent = result.message || "Login failed";
+      /* --- عرض رسالة الخطأ القادمة من السيرفر --- 
+      const params = new URLSearchParams(window.location.search);
+      if (params.has('error')) {
+        errBox.textContent = decodeURIComponent(params.get('error'));
       }
-    } catch {
-      errorMessage.textContent = "Something went wrong while submitting the form.";
+
+      /* --- التحقّق البسيط قبل الإرسال --- 
+      form.addEventListener('submit', e => {
+        const email = sanitizeInput(document.getElementById('email').value);
+        const pass  = sanitizeInput(document.getElementById('password').value);
+        errBox.textContent = '';
+
+        if (!isValidEmail(email)) {
+          //e.preventDefault();
+          errBox.textContent = 'Invalid email format.';
+        } else if (!isValidPassword(pass)) {
+          //e.preventDefault();
+          errBox.textContent = 'Password must be at least 6 characters.';
+        }
+        /* إذا مرّ التحقق يُرسل الفورم تلقائيًا (action="/login") 
+      });
+    });
+
+    /* دوال مساعدة 
+    function sanitizeInput(str){
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML.trim();
     }
-  });
-</script>
+    function isValidEmail(e){
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+    }
+    function isValidPassword(p){
+      return p.length >= 6;
+    }*/
+    </script>
 </body>
 </html>

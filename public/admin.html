@@ -119,7 +119,8 @@
   </div>
 
   <div class="logout-container">
-    <button class="logout-btn" onclick="logout()">Logout</button>
+    <button id="logout-btn" class="logout-btn">Logout</button>
+
   </div>
 
   <!-- NEW – عناصر المودال و التوست -->
@@ -132,70 +133,6 @@
   </div>
   <div id="toast"></div>
 
-<script>
-  async function logout() {
-    await fetch('/logout');
-    location.href = '/login';
-  }
-
-  /* ---------- جلب المستخدمين ---------- */
-  async function fetchUsers() {
-    const res = await fetch('/admin/users');
-    const users = await res.json();
-    const tbody = document.getElementById('user-table-body');
-    tbody.innerHTML = '';
-
-    users.forEach(u => {
-      const tr = document.createElement('tr');
-      tr.id = `u-${u._id}`;
-      tr.innerHTML = `
-        <td>${u.name}</td>
-        <td>${u.email}</td>
-        <td>${u.role || 'user'}</td>
-        <td><button class="delete-btn" onclick="confirmDelete('${u._id}','${u.name}')">Delete</button></td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
-
-  /* ---------- صندوق التأكيد ---------- */
-  const overlay   = document.getElementById('overlay');
-  const yesBtn    = document.getElementById('confirmYes');
-  const noBtn     = document.getElementById('confirmNo');
-  const confirmMsg= document.getElementById('confirmMsg');
-
-  function confirmDelete(id,name){
-    confirmMsg.textContent = `Delete user "${name}"?`;
-    overlay.style.display  = 'flex';
-
-    yesBtn.onclick = () => performDelete(id);
-    noBtn.onclick  = () => overlay.style.display = 'none';
-  }
-
-  async function performDelete(id){
-    overlay.style.display = 'none';
-    try{
-      const res = await fetch(`/admin/users/${id}`,{method:'DELETE'});
-      if(res.ok){
-        document.getElementById(`u-${id}`).remove();
-        showToast('User deleted ✅');
-      }else{
-        showToast('Failed to delete user ❌');
-      }
-    }catch{
-      showToast('Error while deleting user ❌');
-    }
-  }
-
-  /* ---------- Toast (رسالة عابرة) ---------- */
-  const toast = document.getElementById('toast');
-  function showToast(msg){
-    toast.textContent = msg;
-    toast.style.display = 'block';
-    setTimeout(()=>toast.style.display='none',3000);
-  }
-
-  fetchUsers();
-</script>
+<script src="admin.js" defer></script>
 </body>
 </html>

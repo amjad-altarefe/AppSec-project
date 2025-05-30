@@ -154,64 +154,6 @@
   <!-- DOMPurify + قواعد التحقّق -->
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
   <script src="sanitization.js"></script>
-
-  <script>
-    const form = document.getElementById('register-form');
-    const errorBox = document.getElementById('error-message');
-    const passwordError = document.getElementById('password-error');
-    
-    // إخفاء الرسائل عند الكتابة من جديد
-    ['name', 'email', 'password'].forEach(id =>
-      document.getElementById(id).addEventListener('input', () => {
-        errorBox.textContent = '';
-        passwordError.style.display = 'none';
-      })
-    );
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const name      = sanitizeInput(document.getElementById('name').value);
-      const email     = sanitizeInput(document.getElementById('email').value);
-      const password  = sanitizeInput(document.getElementById('password').value);
-
-      /* تحقق فرونت‑إند */
-      if (!isValidName(name))   return showError("Name must contain only letters and spaces.");
-      if (!isValidEmail(email)) return showError("Invalid email format.");
-
-      if (!isValidPassword(password)) {
-        showError(
-          'Password must be at least 8 characters and include:\n' +
-          '• One uppercase letter\n• One lowercase letter\n• One special character'
-        );
-        return;
-      }
-
-      /* تجهيز البيانات وإرسالها */
-      const formData = new URLSearchParams({ name, email, password });
-
-      try {
-        const res = await fetch('/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: formData.toString()
-        });
-
-        if (res.ok) {
-          window.location.href = '/login';
-        } else {
-          // السيرفر يبعث نص (ليس JSON) مثل "Email already exists."
-          const msg = await res.text();
-          showError(msg || 'Registration failed');
-        }
-      } catch {
-        showError('Something went wrong while submitting the form.');
-      }
-    });
-
-    function showError(msg) {
-      errorBox.textContent = msg;
-    }
-  </script>
+<script src="register.js" defer></script>
 </body>
 </html>
