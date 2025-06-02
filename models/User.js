@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const { encrypt, decrypt } = require('../encryption');
 
 const userSchema = new mongoose.Schema({
     name: String,
