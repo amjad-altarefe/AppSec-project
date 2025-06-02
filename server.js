@@ -6,7 +6,7 @@ const bcrypt = require('bcrypt');
 const session = require('express-session');
 const { body, validationResult } = require('express-validator');
 require('dotenv').config();
-const { authenticateJWT, authorizeRoles, checkSession } = require('./authentication');
+const {checkAdmin, checkSession } = require('./authentication');
 const { encrypt, decrypt } = require('./encryption');
 const rateLimit = require('express-rate-limit');
 
@@ -119,16 +119,6 @@ app.post('/login', [
     return res.redirect('/login?error=' + encodeURIComponent('Server error'));
   }
 });
-
-function checkAdmin(req, res, next) {
-  if (req.session && req.session.isAdmin) {
-    next(); // السماح بالوصول
-  } else {
-    res.status(403).send('Access denied');
-  }
-}
-
-
 app.post('/register',[ body('name').trim().notEmpty().withMessage('Name is required'),
   body('email').matches( /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}$/i)
   .withMessage('Invalid email format').normalizeEmail(),
@@ -203,11 +193,11 @@ app.get('/logout', (req, res) => {
 
 
 
-app.get('/admin', checkAdmin, (req, res) => {
+app.get('/admin', checkAdmin,checkSession, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 //✅ عرض جميع المستخدمين:
-app.get('/admin/users', checkAdmin, async (req, res) => {
+app.get('/admin/users', checkAdmin,checkSession, async (req, res) => {
   try {
     const users = await User.find();
     const decryptedUsers = users.map(user => ({
@@ -226,7 +216,7 @@ app.get('/home', (req, res) => {
 });
 
 //✅ حذف مستخدم:
-app.delete('/admin/users/:id', checkAdmin, async (req, res) => {
+app.delete('/admin/users/:id', checkAdmin,checkSession, async (req, res) => {
   try {
     await User.findByIdAndDelete(req.params.id);
     res.send('User deleted');
@@ -236,13 +226,7 @@ app.delete('/admin/users/:id', checkAdmin, async (req, res) => {
 });
 
 // استخدامها في المسارات
-app.get('/protected-route', authenticateJWT, (req, res) => {
-    res.json({ message: 'This is a protected route', user: req.user });
-});
 
-app.get('/admin-only', authenticateJWT, authorizeRoles('admin'), (req, res) => {
-    res.json({ message: 'Admin dashboard', user: req.user });
-});
 app.get('/api/user', (req, res) => {
   if (!req.session.userId) return res.status(401).json({ error: 'Unauthorized' });
 
@@ -253,25 +237,6 @@ app.get('/api/user', (req, res) => {
     })
     .catch(() => res.status(500).json({ error: 'Server error' }));
 });
-
-app.put('/api/profile', async (req, res) => {
-  if (!req.session.userId) return res.status(401).send("Unauthorized");
-
-  try {
-    const { name, email } = req.body;
-    const encryptedEmail = encrypt(email);
-    await User.findByIdAndUpdate(req.session.userId, { name, email: encryptedEmail });
-    res.send("Profile updated");
-  } catch {
-    res.status(500).send("Error updating profile");
-  }
-});
-
-app.get('/profile', checkSession, (req, res) => {
-  if (!req.session.userId) return res.redirect('/login');
-  res.sendFile(path.join(__dirname, 'public', 'profile.html'));
-});
-
 
 
 app.listen(PORT, () => {
