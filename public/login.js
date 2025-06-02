@@ -24,16 +24,3 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
-
-/* دوال المساعدة (أو استوردها من sanitization.js لو كانت global) */
-function sanitizeInput(str){
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML.trim();
-}
-function isValidEmail(e){
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
-}
-function isValidPassword(p){
-  return p.length >= 6;
-}
