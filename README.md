@@ -20,7 +20,7 @@ This app demonstrates secure coding practices including:
 - **Backend:** Node.js + Express
 - **Database:** MongoDB
 - **Authentication:** JWT + bcrypt
-- **Deployment:** [Render / Heroku / Local]
+- **Deployment:** [Render]
 
 
 ##  Features
