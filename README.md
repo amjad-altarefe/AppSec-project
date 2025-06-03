@@ -60,8 +60,8 @@ This app demonstrates secure coding practices including:
 
 ##  Threat Modeling
 
-- [STRIDE Threat Model](sarah.md)
-- [DREAD Risk Assessment](sarah.md)
+- [STRIDE Threat Model](s.md)
+- [DREAD Risk Assessment](s.md)
 
 
 ##  Code Scanning Tools
