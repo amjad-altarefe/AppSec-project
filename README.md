@@ -16,10 +16,10 @@ This app demonstrates secure coding practices including:
 
 ## Tech Stack
 
-- **Frontend:** [React.js / HTML-CSS ]
+- **Frontend:** [ HTML-CSS ]
 - **Backend:** Node.js + Express
 - **Database:** MongoDB
-- **Authentication:** JWT + bcrypt
+- **Authentication:** session-based + bcrypt
 - **Deployment:** [Render]
 
 
@@ -32,7 +32,6 @@ This app demonstrates secure coding practices including:
 - AES encryption for sensitive data
 - Role-based access control (Admin / User)
 - Session management with secure cookies
-- Multi-Factor Authentication (MFA)
 - Rate limiting and CAPTCHA protection
 - STRIDE threat modeling
 - DREAD risk assessment
@@ -46,7 +45,7 @@ This app demonstrates secure coding practices including:
 
 | Category               | Implementation                                  
 |------------------------|-------------------------------------------------
-| Authentication         | JWT + Multi-Factor Authentication               
+| Authentication         | session-based     
 | Authorization          | Role-based access control                       
 | Hashing & Encryption   | bcrypt & AES for sensitive fields                                                                
 | Input Validation       | validator.js                                    
@@ -66,7 +65,7 @@ This app demonstrates secure coding practices including:
 ##  Code Scanning Tools
 
 Security tools used to scan and test the codebase:
-
+- [ ] GitHub CodeQL
 
 
 ## Deployment
