@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Welcome</title>
+  <style>
+    body {
+      background-color: #1a1f24;
+      color: #f8f8f8;
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      padding-top: 60px;
+    }
+    a {
+      display: block;
+      margin: 20px auto;
+      padding: 12px 20px;
+      max-width: 200px;
+      text-decoration: none;
+      background-color: #66b2ff;
+      color: #fff;
+      border-radius: 10px;
+      font-weight: bold;
+    }
+    a:hover {
+      background-color: #559ddf;
+    }
+  </style>
+</head>
+<body>
+  <h1 id="welcome-message">Welcome back!</h1>
+
+  <!--<a href="/profile">Edit Profile</a>-->
+  <!--<a href="/mfa/setup">Setup MFA</a>-->
+  <a href="/logout">Logout</a>
+  <!--<a href="/setup-mfa.html">Enable MFA</a>-->
+
+  <script>
+    // عرض الاسم من الـ session عبر API
+    fetch('/api/user')
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('welcome-message').textContent = `Welcome, ${data.name}!`;
+      })
+      .catch(() => {
+        document.getElementById('welcome-message').textContent = `Welcome!`;
+      });
+  </script>
+</body>
+</html>
