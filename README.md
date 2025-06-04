@@ -1,4 +1,4 @@
-<<<<<<< feature/loglimiter
+
 #  Secure Web Application – AppSec-project
 
 ##  Description
@@ -172,11 +172,3 @@ cd project
   node server.js
   npm start
 ```
-
-
-
-
-
-
-
->>>>>>> main
