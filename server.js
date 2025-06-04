@@ -37,6 +37,7 @@ const PORT=process.env.PORT;
 const EMAIL = process.env.EMAIL
 const SALT = Number(process.env.SALT);
 const secret = process.env.JWT_SECRET;
+const MONGO_DB = process.env.MONGO_DB
 
 mongoose.connect('mongodb://127.0.0.1:27017/myapp', {
     useNewUrlParser: true,
@@ -119,7 +120,7 @@ app.post('/login', [
     return res.redirect('/login?error=' + encodeURIComponent('Server error'));
   }
 });
-app.post('/register',[ body('name').trim().notEmpty().withMessage('Name is required'),
+app.post('/register',[ body('name').matches(/^[A-Za-z\s]{2,}$/).withMessage('Invalid Name format'),
   body('email').matches( /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}$/i)
   .withMessage('Invalid email format').normalizeEmail(),
   body('password')
@@ -169,18 +170,18 @@ app.post('/register',[ body('name').trim().notEmpty().withMessage('Name is requi
 app.use(express.static(path.join(__dirname, 'public')));
 
 // الراوت الرئيسي يفتح login.html
-app.get('/', (req, res) => {
+app.get('/',loginLimiter, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
 
 // راوت login
-app.get('/login', (req, res) => {
+app.get('/login',loginLimiter, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
 // راوت register
-app.get('/register', (req, res) => {
+app.get('/register',loginLimiter, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'register.html'));
 });
 
@@ -193,11 +194,11 @@ app.get('/logout', (req, res) => {
 
 
 
-app.get('/admin', checkAdmin,checkSession, (req, res) => {
+app.get('/admin',loginLimiter, checkAdmin,checkSession, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 //✅ عرض جميع المستخدمين:
-app.get('/admin/users', checkAdmin,checkSession, async (req, res) => {
+app.get('/admin/users',loginLimiter, checkAdmin,checkSession, async (req, res) => {
   try {
     const users = await User.find();
     const decryptedUsers = users.map(user => ({
@@ -211,7 +212,7 @@ app.get('/admin/users', checkAdmin,checkSession, async (req, res) => {
     res.status(500).send('Server error');
   }
 });
-app.get('/home', (req, res) => {
+app.get('/home',loginLimiter, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'home.html'));
 });
 
@@ -227,7 +228,7 @@ app.delete('/admin/users/:id', checkAdmin,checkSession, async (req, res) => {
 
 // استخدامها في المسارات
 
-app.get('/api/user', (req, res) => {
+app.get('/api/user',loginLimiter, (req, res) => {
   if (!req.session.userId) return res.status(401).json({ error: 'Unauthorized' });
 
   User.findById(req.session.userId)
