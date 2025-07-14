@@ -10,7 +10,7 @@
     "helmet": "^8.1.0",
     "init": "^0.1.2",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.15.0",
+    "mongoose": "^8.16.0",
     "qrcode": "^1.5.4",
     "speakeasy": "^2.0.0"
   }
